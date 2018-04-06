@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from gensim.models import KeyedVectors
+from gensim.models import KeyedVectors, Word2Vec
 from gensim.scripts.glove2word2vec import glove2word2vec
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -14,10 +14,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.base import BaseEstimator, TransformerMixin
 #import w2v
 import string
+from nltk import word_tokenize
 
 #punctuations = string.punctuation
 punctuations = ['!', '?', '.']
-
+embeddings_index = dict()
 
 class PunctuationExtractor(BaseEstimator, TransformerMixin):
 
@@ -48,6 +49,7 @@ class CapitalExtractor(BaseEstimator, TransformerMixin):
 
     def getCapCount(self, sen):
         count = 0
+        #print('Caps', sen)
         for char in sen:
             if char.isupper():
                 count += 1
@@ -73,12 +75,9 @@ class ArrayCaster(BaseEstimator, TransformerMixin):
     print(np.transpose(np.matrix(data)).shape)
     return np.transpose(np.matrix(data))
 
-w2v_model = KeyedVectors.load_word2vec_format('D:/Class/ToxicCommentsClassifier/Data/word2vec_twitter.txt')
-print(w2v_model.most_similar(positive=['woman', 'king'], negative=['man'], topn=10))
-
 
 # https://nadbordrozd.github.io/blog/2016/05/20/text-classification-with-word2vec/
-class MeanEmbeddingVectorizer(object):
+class MeanEmbeddingVectorizer(BaseEstimator, TransformerMixin):
     def __init__(self, word2vec):
         self.word2vec = word2vec
         # if a text is empty we should return a vector of zeros
@@ -89,11 +88,14 @@ class MeanEmbeddingVectorizer(object):
         return self
 
     def transform(self, X):
+        print(X)
+        Y = word_tokenize(X)
         return np.array([
             np.mean([self.word2vec[w] for w in words if w in self.word2vec]
                     or [np.zeros(self.dim)], axis=0)
-            for words in X
+            for words in Y
         ])
+
 
 
 
@@ -128,19 +130,39 @@ y_train = train[levels]
 
 vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 25, lowercase = False)
 
-embeddings_index = dict()
-for word in w2v_model.wv.vocab:
-    embeddings_index[word] = w2v_model.word_vec(word)
+x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
+tokenized_x_train = [word_tokenize(sent) for sent in x_train]
+tokenized_x_test = [word_tokenize(sent) for sent in x_test]
+
+
+
+MODEL = 'GloVe'
+
+if MODEL == 'GLOVE':
+    # This is for importing the GloVe data into word2vec format.
+    # glove2word2vec('Data\glove.twitter.27B.25d.txt', 'Data\word2vec_twitter.txt')
+    #w2v_model = KeyedVectors.load_word2vec_format('Data\word2vec_twitter_50.txt')
+    w2v_model = KeyedVectors.load_word2vec_format('D:/Class/ToxicCommentsClassifier/Data/word2vec_twitter_50.txt')
+    for word in w2v_model.wv.vocab:
+        embeddings_index[word] = w2v_model.word_vec(word)
+else:
+    w2v_model = Word2Vec(tokenized_x_train, size=100, min_count=10, workers=4)
+    embeddings_index = dict(zip(w2v_model.wv.index2word, w2v_model.wv.syn0))
+
+
+#embeddings_index = dict()
+#for word in w2v_model.wv.vocab:
+#    embeddings_index[word] = w2v_model.word_vec(word)
 
 ppl = Pipeline([
     ('feats', FeatureUnion ([
         #('ngram', CountVectorizer(ngram_range=(1, 2), analyzer='char', min_df = 30)),
-        ('tfidf', vectorizer),
-        ("word2vec vectorizer", MeanEmbeddingVectorizer(embeddings_index)),
         ('Caps', Pipeline([
             ('Cap', CapitalExtractor()),
             ('caster', ArrayCaster())
             ])),
+        ("word2vec vectorizer", MeanEmbeddingVectorizer(embeddings_index)),
+        ('tfidf', vectorizer),
         ('Punc', Pipeline ([
             ('Pun', PunctuationExtractor()),
             ('cast', ArrayCaster())
@@ -149,7 +171,8 @@ ppl = Pipeline([
         ])),
     ('clf', OneVsRestClassifier(LinearSVC(random_state=42)))
     ])
-x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
+
+
 
 #x_train = x_train[:300]
 #y_train = y_train[:300]

@@ -46,6 +46,9 @@ class MeanEmbeddingVectorizer(object):
         return self
 
     def transform(self, X):
+        print(X[0])
+        X = word_tokenize(X)
+        
         return np.array([
             np.mean([self.word2vec[w] for w in words if w in self.word2vec]
                     or [np.zeros(self.dim)], axis=0)
@@ -58,8 +61,8 @@ pipeLine = Pipeline([
     ("svc", OneVsRestClassifier(LinearSVC(random_state=42)))])
 
 
-model = pipeLine.fit(tokenized_x_train, y_train)
-pred = model.predict(tokenized_x_test)
+model = pipeLine.fit(x_train, y_train)
+pred = model.predict(x_test)
 print('Done')
 print(accuracy_score(y_test, pred))
 print(classification_report(y_test, pred, target_names=levels))

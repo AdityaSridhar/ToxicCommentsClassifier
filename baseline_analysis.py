@@ -12,6 +12,7 @@ from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.linear_model import LogisticRegression
 #import w2v
 import string
 from nltk import word_tokenize
@@ -128,7 +129,7 @@ levels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate
 
 y_train = train[levels]
 
-vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 15, lowercase = False)
+vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 20, lowercase = False)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
 tokenized_x_train = [word_tokenize(sent) for sent in x_train]
@@ -169,7 +170,7 @@ ppl = Pipeline([
             ]))
         #('Punc', PunctuationExtractor())
         ])),
-    ('clf', OneVsRestClassifier(LinearSVC(random_state=42)))
+    ('clf', OneVsRestClassifier(LogisticRegression(random_state=42)))
     ])
 
 

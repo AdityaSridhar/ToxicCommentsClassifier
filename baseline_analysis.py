@@ -4,6 +4,7 @@ from gensim.models import KeyedVectors, Word2Vec
 from gensim.scripts.glove2word2vec import glove2word2vec
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, hamming_loss
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
@@ -159,7 +160,7 @@ ppl = Pipeline([
         ]))
         # ('Punc', PunctuationExtractor())
     ])),
-    ('clf', OneVsRestClassifier(LinearSVC(random_state=42)))
+    ('clf', OneVsRestClassifier(LogisticRegression(random_state=42)))
 ])
 
 # x_train = x_train[:300]

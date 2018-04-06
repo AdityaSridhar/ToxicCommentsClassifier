@@ -6,10 +6,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.svm import LinearSVC
+from nltk import word_tokenize
 
 # glove2word2vec('Data\glove.twitter.27B.25d.txt', 'Data\word2vec_twitter.txt')
-from sklearn.svm import LinearSVC
 
 w2v_model = KeyedVectors.load_word2vec_format('Data\word2vec_twitter.txt')
 print(w2v_model.most_similar(positive=['woman', 'king'], negative=['man'], topn=10))
@@ -50,7 +50,10 @@ levels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate
 y_train = train[levels]
 x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
 
-model = etree_w2v.fit(x_train, y_train)
-pred = model.predict(x_test)
+tokenized_x_train = [word_tokenize(sent) for sent in x_train]
+model = etree_w2v.fit(tokenized_x_train, y_train)
+
+tokenized_x_test = [word_tokenize(sent) for sent in x_test]
+pred = model.predict(tokenized_x_test)
 print('Done')
 print(accuracy_score(y_test, pred))

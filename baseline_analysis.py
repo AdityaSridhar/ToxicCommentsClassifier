@@ -88,12 +88,12 @@ class MeanEmbeddingVectorizer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        print(X)
-        Y = word_tokenize(X)
+        #print(X)
+        X = [word_tokenize(x) for x in X]
         return np.array([
             np.mean([self.word2vec[w] for w in words if w in self.word2vec]
                     or [np.zeros(self.dim)], axis=0)
-            for words in Y
+            for words in X
         ])
 
 
@@ -128,7 +128,7 @@ levels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate
 
 y_train = train[levels]
 
-vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 25, lowercase = False)
+vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 15, lowercase = False)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
 tokenized_x_train = [word_tokenize(sent) for sent in x_train]

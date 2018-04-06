@@ -128,7 +128,7 @@ levels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate
 
 y_train = train[levels]
 
-vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 20, lowercase = False)
+vectorizer = TfidfVectorizer(max_features=8000, stop_words='english', ngram_range=(1,2), min_df = 20, lowercase = False)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
 tokenized_x_train = [word_tokenize(sent) for sent in x_train]

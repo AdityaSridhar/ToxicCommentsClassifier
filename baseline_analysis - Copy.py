@@ -4,8 +4,7 @@ from gensim.models import KeyedVectors, Word2Vec
 from gensim.scripts.glove2word2vec import glove2word2vec
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, hamming_loss
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.naive_bayes import MultinomialNB
@@ -18,21 +17,21 @@ from sklearn.linear_model import LogisticRegression
 import string
 from nltk import word_tokenize
 
-# punctuations = string.punctuation
+#punctuations = string.punctuation
 punctuations = ['!', '?', '.']
 embeddings_index = dict()
 
-
 class PunctuationExtractor(BaseEstimator, TransformerMixin):
+
     def __init__(self):
         pass
 
     def getPuncCount(self, sen):
         count = 0
-        # print(sen)
+        #print(sen)
         for char in sen:
             if char in punctuations:
-                count += 1
+                count +=  1
         return count
 
     def transform(self, df, y=None):
@@ -44,18 +43,18 @@ class PunctuationExtractor(BaseEstimator, TransformerMixin):
         print(self)
         return self
 
-
 class CapitalExtractor(BaseEstimator, TransformerMixin):
+
     def __init__(self):
         pass
 
     def getCapCount(self, sen):
         count = 0
-        # print('Caps', sen)
+        #print('Caps', sen)
         for char in sen:
             if char.isupper():
                 count += 1
-        # print(count)
+        #print(count)
         return count
 
     def transform(self, df, y=None):
@@ -64,18 +63,18 @@ class CapitalExtractor(BaseEstimator, TransformerMixin):
 
     def fit(self, df, y=None):
         """Returns `self` unless something different happens in train and test"""
-        # print(self)
+        #print(self)
         return self
 
 
 class ArrayCaster(BaseEstimator, TransformerMixin):
-    def fit(self, x, y=None):
-        return self
+  def fit(self, x, y=None):
+    return self
 
-    def transform(self, data):
-        print(data.shape)
-        print(np.transpose(np.matrix(data)).shape)
-        return np.transpose(np.matrix(data))
+  def transform(self, data):
+    print(data.shape)
+    print(np.transpose(np.matrix(data)).shape)
+    return np.transpose(np.matrix(data))
 
 
 # https://nadbordrozd.github.io/blog/2016/05/20/text-classification-with-word2vec/
@@ -90,13 +89,15 @@ class MeanEmbeddingVectorizer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        # print(X)
+        #print(X)
         X = [word_tokenize(x) for x in X]
         return np.array([
             np.mean([self.word2vec[w] for w in words if w in self.word2vec]
                     or [np.zeros(self.dim)], axis=0)
             for words in X
         ])
+
+
 
 
 '''
@@ -114,32 +115,34 @@ def getCapCount(sen):
             count += 1
     return count
 '''
-# path = '\Data\train.csv'
+#path = '\Data\train.csv'
 punc = []
 caps = []
 path = 'D:/Class/ToxicCommentsClassifier/Data/train.csv'
 train = pd.read_csv(path)
 train.drop('id', axis=1, inplace=True)
 x_train = train['comment_text']
-# for sen in x_train:
+#for sen in x_train:
 #    punc.append(getPuncCount(sen))
 #    caps.append(getCapCount(sen))
 levels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 
 y_train = train[levels]
 
-vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 20, lowercase = False)
+vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 22, lowercase = False)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
 tokenized_x_train = [word_tokenize(sent) for sent in x_train]
 tokenized_x_test = [word_tokenize(sent) for sent in x_test]
+
+
 
 MODEL = 'GloVe'
 
 if MODEL == 'GLOVE':
     # This is for importing the GloVe data into word2vec format.
     # glove2word2vec('Data\glove.twitter.27B.25d.txt', 'Data\word2vec_twitter.txt')
-    # w2v_model = KeyedVectors.load_word2vec_format('Data\word2vec_twitter_50.txt')
+    #w2v_model = KeyedVectors.load_word2vec_format('Data\word2vec_twitter_50.txt')
     w2v_model = KeyedVectors.load_word2vec_format('D:/Class/ToxicCommentsClassifier/Data/word2vec_twitter_50.txt')
     for word in w2v_model.wv.vocab:
         embeddings_index[word] = w2v_model.word_vec(word)
@@ -147,29 +150,12 @@ else:
     w2v_model = Word2Vec(tokenized_x_train, size=100, min_count=10, workers=4)
     embeddings_index = dict(zip(w2v_model.wv.index2word, w2v_model.wv.syn0))
 
-# embeddings_index = dict()
-# for word in w2v_model.wv.vocab:
+
+#embeddings_index = dict()
+#for word in w2v_model.wv.vocab:
 #    embeddings_index[word] = w2v_model.word_vec(word)
 
 ppl = Pipeline([
-    ('feats', FeatureUnion([
-        # ('ngram', CountVectorizer(ngram_range=(1, 2), analyzer='char', min_df = 30)),
-        ('Caps', Pipeline([
-            ('Cap', CapitalExtractor()),
-            ('caster', ArrayCaster())
-        ])),
-        ("word2vec vectorizer", MeanEmbeddingVectorizer(embeddings_index)),
-        ('tfidf', vectorizer),
-        ('Punc', Pipeline([
-            ('Pun', PunctuationExtractor()),
-            ('cast', ArrayCaster())
-        ]))
-        # ('Punc', PunctuationExtractor())
-    ])),
-    ('clf', OneVsRestClassifier(LinearSVC(random_state=42)))
-])
-
-logistic_ppl = Pipeline([
     ('feats', FeatureUnion ([
         #('ngram', CountVectorizer(ngram_range=(1, 2), analyzer='char', min_df = 30)),
         ('Caps', Pipeline([
@@ -187,24 +173,20 @@ logistic_ppl = Pipeline([
     ('clf', OneVsRestClassifier(LogisticRegression(random_state=42)))
     ])
 
-# x_train = x_train[:300]
-# y_train = y_train[:300]
-# x_test = x_test[:300]
-# y_test = y_test[:300]
+
+
+#x_train = x_train[:300]
+#y_train = y_train[:300]
+#x_test = x_test[:300]
+#y_test = y_test[:300]
 model = ppl.fit(x_train, y_train)
 pred = model.predict(x_test)
 
-print('Done')
-print('Accuracy for the Linear SVC model is {0}'.format(accuracy_score(y_test, pred)))
-print('Classification report for the Linear SVC model: {0}'.format(classification_report(y_test, pred)))
-print('Hamming Loss for the Linear SVC model is {0}'.format(hamming_loss(y_test, pred)))
+print ('Done')
+print(accuracy_score(y_test, pred))
 
 
-model = logistic_ppl.fit(x_train, y_train)
-pred = model.predict(x_test)
-print('Accuracy for the LogReg model is {0}'.format(accuracy_score(y_test, pred)))
-print('Classification report for the LogReg model: {0}'.format(classification_report(y_test, pred)))
-print('Hamming Loss for the LogReg model is {0}'.format(hamming_loss(y_test, pred)))
+
 
 '''
 #y_train['punc'] = punc
@@ -248,3 +230,4 @@ clf.fit(x_train, y_train)
 pred = clf.predict(x_test)
 print(accuracy_score(y_test, pred))
 '''
+

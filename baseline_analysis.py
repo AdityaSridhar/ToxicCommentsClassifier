@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+from gensim.models import KeyedVectors
+from gensim.scripts.glove2word2vec import glove2word2vec
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
@@ -9,9 +12,11 @@ from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.base import BaseEstimator, TransformerMixin
+#import w2v
 import string
 
-punctuations = string.punctuation
+#punctuations = string.punctuation
+punctuations = ['!', '?', '.']
 
 
 class PunctuationExtractor(BaseEstimator, TransformerMixin):
@@ -68,6 +73,30 @@ class ArrayCaster(BaseEstimator, TransformerMixin):
     print(np.transpose(np.matrix(data)).shape)
     return np.transpose(np.matrix(data))
 
+w2v_model = KeyedVectors.load_word2vec_format('D:/Class/ToxicCommentsClassifier/Data/word2vec_twitter.txt')
+print(w2v_model.most_similar(positive=['woman', 'king'], negative=['man'], topn=10))
+
+
+# https://nadbordrozd.github.io/blog/2016/05/20/text-classification-with-word2vec/
+class MeanEmbeddingVectorizer(object):
+    def __init__(self, word2vec):
+        self.word2vec = word2vec
+        # if a text is empty we should return a vector of zeros
+        # with the same dimensionality as all the other vectors
+        self.dim = len(next(iter(word2vec.values())))
+
+    def fit(self, X, y):
+        return self
+
+    def transform(self, X):
+        return np.array([
+            np.mean([self.word2vec[w] for w in words if w in self.word2vec]
+                    or [np.zeros(self.dim)], axis=0)
+            for words in X
+        ])
+
+
+
 '''
 def getPuncCount(sen):
     count = 0
@@ -90,19 +119,24 @@ path = 'D:/Class/ToxicCommentsClassifier/Data/train.csv'
 train = pd.read_csv(path)
 train.drop('id', axis=1, inplace=True)
 x_train = train['comment_text']
-for sen in x_train:
-    punc.append(getPuncCount(sen))
-    caps.append(getCapCount(sen))
+#for sen in x_train:
+#    punc.append(getPuncCount(sen))
+#    caps.append(getCapCount(sen))
 levels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 
 y_train = train[levels]
 
-vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 20, lowercase = False)
+vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 25, lowercase = False)
+
+embeddings_index = dict()
+for word in w2v_model.wv.vocab:
+    embeddings_index[word] = w2v_model.word_vec(word)
 
 ppl = Pipeline([
     ('feats', FeatureUnion ([
-        #('ngram', CountVectorizer(ngram_range=(1, 1), analyzer='char')),
+        #('ngram', CountVectorizer(ngram_range=(1, 2), analyzer='char', min_df = 30)),
         ('tfidf', vectorizer),
+        ("word2vec vectorizer", MeanEmbeddingVectorizer(embeddings_index)),
         ('Caps', Pipeline([
             ('Cap', CapitalExtractor()),
             ('caster', ArrayCaster())

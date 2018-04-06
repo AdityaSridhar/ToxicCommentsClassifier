@@ -14,7 +14,6 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.linear_model import LogisticRegression
-#import w2v
 import string
 from nltk import word_tokenize
 
@@ -114,10 +113,10 @@ def getCapCount(sen):
             count += 1
     return count
 '''
-# path = '\Data\train.csv'
+path = 'Data\\train.csv'
 punc = []
 caps = []
-path = 'D:/Class/ToxicCommentsClassifier/Data/train.csv'
+# path = 'D:/Class/ToxicCommentsClassifier/Data/train.csv'
 train = pd.read_csv(path)
 train.drop('id', axis=1, inplace=True)
 x_train = train['comment_text']
@@ -128,7 +127,7 @@ levels = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate
 
 y_train = train[levels]
 
-vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1,2), min_df = 20, lowercase = False)
+vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1, 2), min_df=20, lowercase=False)
 
 x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, random_state=42)
 tokenized_x_train = [word_tokenize(sent) for sent in x_train]
@@ -139,8 +138,8 @@ MODEL = 'GloVe'
 if MODEL == 'GLOVE':
     # This is for importing the GloVe data into word2vec format.
     # glove2word2vec('Data\glove.twitter.27B.25d.txt', 'Data\word2vec_twitter.txt')
-    # w2v_model = KeyedVectors.load_word2vec_format('Data\word2vec_twitter_50.txt')
-    w2v_model = KeyedVectors.load_word2vec_format('D:/Class/ToxicCommentsClassifier/Data/word2vec_twitter_50.txt')
+    w2v_model = KeyedVectors.load_word2vec_format('Data\word2vec_twitter_50.txt')
+    # w2v_model = KeyedVectors.load_word2vec_format('D:/Class/ToxicCommentsClassifier/Data/word2vec_twitter_50.txt')
     for word in w2v_model.wv.vocab:
         embeddings_index[word] = w2v_model.word_vec(word)
 else:
@@ -170,22 +169,22 @@ ppl = Pipeline([
 ])
 
 logistic_ppl = Pipeline([
-    ('feats', FeatureUnion ([
-        #('ngram', CountVectorizer(ngram_range=(1, 2), analyzer='char', min_df = 30)),
+    ('feats', FeatureUnion([
+        # ('ngram', CountVectorizer(ngram_range=(1, 2), analyzer='char', min_df = 30)),
         ('Caps', Pipeline([
             ('Cap', CapitalExtractor()),
             ('caster', ArrayCaster())
-            ])),
+        ])),
         ("word2vec vectorizer", MeanEmbeddingVectorizer(embeddings_index)),
         ('tfidf', vectorizer),
-        ('Punc', Pipeline ([
+        ('Punc', Pipeline([
             ('Pun', PunctuationExtractor()),
             ('cast', ArrayCaster())
-            ]))
-        #('Punc', PunctuationExtractor())
-        ])),
+        ]))
+        # ('Punc', PunctuationExtractor())
+    ])),
     ('clf', OneVsRestClassifier(LogisticRegression(random_state=42)))
-    ])
+])
 
 # x_train = x_train[:300]
 # y_train = y_train[:300]
@@ -198,7 +197,6 @@ print('Done')
 print('Accuracy for the Linear SVC model is {0}'.format(accuracy_score(y_test, pred)))
 print('Classification report for the Linear SVC model: {0}'.format(classification_report(y_test, pred)))
 print('Hamming Loss for the Linear SVC model is {0}'.format(hamming_loss(y_test, pred)))
-
 
 model = logistic_ppl.fit(x_train, y_train)
 pred = model.predict(x_test)

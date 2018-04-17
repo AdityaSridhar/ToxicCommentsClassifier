@@ -45,3 +45,15 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+Data/word2vec_twitter_50.txt
+Data/glove.twitter.27B.50d.txt
+Data/glove.twitter.27B.zip
+Data/word2vec_twitter.txt
+Data/glove.twitter.27B.25d.txt
+Data/glove.twitter.27B.200d.txt
+Data/glove.twitter.27B.100d.txt
+.idea/misc.xml
+.idea/workspace.xml
+.idea/modules.xml
+.idea/ToxicCommentsClassifier.iml
+.idea/vcs.xml

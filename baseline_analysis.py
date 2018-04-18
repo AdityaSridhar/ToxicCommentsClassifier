@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import MultinomialNB
 
 from ArrayCaster import ArrayCaster
 from PunctuationExtractor import PunctuationExtractor
@@ -14,7 +15,7 @@ from UpperCaseExtractor import CapitalExtractor
 from Word2VecModels import get_glove_embeddings, get_trained_embeddings
 
 path = 'Data\\train.csv'
-# path = 'D:/Class/ToxicCommentsClassifier/Data/train.csv'
+#path = 'D:/Class/ToxicCommentsClassifier/Data/train.csv'
 train = pd.read_csv(path)
 train.drop('id', axis=1, inplace=True)
 x_train = train['comment_text']
@@ -36,7 +37,8 @@ W2V_MODEL = 'GLOVE'
 tfidf_vectorizer = TfidfVectorizer(max_features=5000, stop_words='english', ngram_range=(1, 2), min_df=20,
                                    lowercase=False)
 
-classifiers = {'SVC': LinearSVC(random_state=42), 'Logistic Regression': LogisticRegression(random_state=42)}
+#classifiers = {'SVC': LinearSVC(random_state=42), 'Logistic Regression': LogisticRegression(random_state=42)}
+classifiers = {'NB': MultinomialNB()}
 
 for name, classifier in classifiers.items():
     ppl = Pipeline([
@@ -53,7 +55,7 @@ for name, classifier in classifiers.items():
                 ('Pun', PunctuationExtractor()),
                 ('cast', ArrayCaster())
             ]))
-            # ('Punc', PunctuationExtractor())
+            #('Punc', PunctuationExtractor())
         ])),
         ('clf', OneVsRestClassifier(classifier))
     ])
@@ -62,5 +64,6 @@ for name, classifier in classifiers.items():
 
     print('Done')
     print('Accuracy for the {1} is {0}'.format(accuracy_score(y_test, pred), name))
-    print('Classification report for the {1}: {0}'.format(classification_report(y_test, pred), name))
+    print('Classification report for the {0}:'.format(name))
+    print('{0}'.format(classification_report(y_test, pred)))
     print('Hamming Loss for the {1} model is {0}'.format(hamming_loss(y_test, pred), name))

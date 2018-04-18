@@ -57,3 +57,4 @@ Data/glove.twitter.27B.100d.txt
 .idea/modules.xml
 .idea/ToxicCommentsClassifier.iml
 .idea/vcs.xml
+*.pyc

@@ -6,6 +6,7 @@ def get_glove_embeddings():
     # This is for importing the GloVe data into word2vec format.
     # glove2word2vec('Data\glove.twitter.27B.25d.txt', 'Data\word2vec_twitter.txt')
     w2v_model = KeyedVectors.load_word2vec_format('Data\word2vec_twitter_50.txt')
+    #w2v_model = KeyedVectors.load_word2vec_format('D:/Class/ToxicCommentsClassifier/Data/word2vec_twitter.txt')
     embeddings_index = dict()
     for word in w2v_model.wv.vocab:
         embeddings_index[word] = w2v_model.word_vec(word)
